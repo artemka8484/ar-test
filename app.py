@@ -22,12 +22,17 @@ def home():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
+    # Надежный способ получения данных
+    json_str = request.get_data().decode('utf-8')
+    print("Получено сообщение от Telegram:", json_str) # Маячок в логи
+    
+    update = telebot.types.Update.de_json(json_str)
     bot.process_new_updates([update])
     return "OK", 200
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
+    print("Бот начал отвечать!") # Маячок в логи
     text = message.text.split()
     if len(text) > 1:
         qr_id = text[1]
