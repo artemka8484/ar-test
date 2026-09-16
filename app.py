@@ -3,7 +3,8 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from flask import Flask, request, redirect
 
 API_TOKEN = '8808815647:AAF7Bvhh0QEv1HPhIfjAu-WSyrVeB6j_FvA'
-bot = telebot.TeleBot(API_TOKEN)
+# ВОТ ЗДЕСЬ ГЛАВНОЕ ИЗМЕНЕНИЕ: threaded=False не даст серверу "уснуть" раньше времени
+bot = telebot.TeleBot(API_TOKEN, threaded=False)
 app = Flask(__name__)
 db = {}
 
@@ -22,17 +23,15 @@ def home():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    # Надежный способ получения данных
     json_str = request.get_data().decode('utf-8')
-    print("Получено сообщение от Telegram:", json_str) # Маячок в логи
-    
+    print("Получено:", json_str)
     update = telebot.types.Update.de_json(json_str)
     bot.process_new_updates([update])
     return "OK", 200
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
-    print("Бот начал отвечать!") # Маячок в логи
+    print("Отвечаю!")
     text = message.text.split()
     if len(text) > 1:
         qr_id = text[1]
