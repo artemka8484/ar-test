@@ -15,17 +15,33 @@ def home():
     qr_id = request.args.get('id')
     if not qr_id:
         return "Отсканируйте код"
-    
     if qr_id not in db:
-        bot_link = "https://t.me/my_magic_ar_bot?start=" + str(qr_id)
-        return redirect(bot_link)
+        link = "https://t.me/my_magic_ar_bot?start=" + str(qr_id)
+        return redirect(link)
     
     data = db[qr_id]
     html = "
-AR Сцена (" + str(data['lang']) + ")
-"
+AR Сцена (" + str(data.get('lang', 'ru')) + ")
+\n"
 if data.get('vid'):
-html = html + "
+html += "
+
+🎥 Видео: " + str(data['vid']) + "
+
+\n"
+if data.get('tst'):
+html += "
+
+🥂 Тосты: " + ", ".join(data['tst']) + "
+
+\n"
+if data.get('gam'):
+html += "
+
+🎮 Игра: " + str(data['gam']) + "
+
+\n"
+return html
 
 🎥 Видео: " + str(data['vid']) + "
 
