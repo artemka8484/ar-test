@@ -44,7 +44,7 @@ LANGS = {
     'ru': {
         'btn_vid': '🎥 Прикрепить видео',
         'btn_tst': '🥂 Прикрепить тосты',
-        'btn_gam': '🎮 Прикрепить игру',
+        'btn_gam': '🥂 Прикрепить игру',
         'btn_done': '✅ Подтвердить',
         'btn_reset': '🔄 Начать сначала',
         'done_msg': '🎉 Готово! Всё привязано к коду ',
@@ -61,10 +61,13 @@ LANGS = {
 @app.route('/')
 def home():
     q = request.args.get('id')
+    print("--- WEB REQUEST RECEIVED FOR ID:", q)
     if not q:
-        return "Scan QR"
+        return "Scan QR code please."
     if q not in db:
-        return redirect("https://t.me/my_magic_ar_bot?start=" + str(q))
+        target_url = "https://t.me/my_magic_ar_bot?start=" + str(q)
+        print("--- REDIRECTING TO:", target_url)
+        return redirect(target_url)
     
     d = db[q]
     res = []
@@ -80,6 +83,7 @@ def home():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     raw_data = request.get_data().decode('utf-8')
+    print("--- TELEGRAM WEBHOOK DATA:", raw_data)
     update = telebot.types.Update.de_json(raw_data)
     bot.process_new_updates([update])
     return "OK", 200
@@ -105,6 +109,7 @@ def get_hub_menu(uid):
 def start_command(message):
     uid = message.chat.id
     text = message.text.split()
+    print("--- START COMMAND FROM USER:", uid, "TEXT:", message.text)
     if len(text) > 1:
         qr_id = text[1]
         users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
@@ -116,15 +121,23 @@ def start_command(message):
         )
         bot.send_message(uid, "​", reply_markup=k)
     else:
-        bot.send_message(uid, "Жду сканирования QR-кода.")
+        # Если пользователь зашел просто так, даем тестовый старт с кодом box777, чтобы вы сразу увидели кнопки
+        qr_id = "box777"
+        users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
+        k = InlineKeyboardMarkup(row_width=1)
+        k.add(
+            Btn("🇲🇪 Crnogorski", callback_data="lang_cr"),
+            Btn("🇬🇧 English", callback_data="lang_en"),
+            Btn("🇷🇺 Русский", callback_data="lang_ru")
+        )
+        bot.send_message(uid, "​", reply_markup=k)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     uid = call.message.chat.id
     data = call.data
     if uid not in users:
-        bot.answer_callback_query(call.id, "Ошибка! Отсканируйте код заново.")
-        return
+        users[uid] = {'qr': 'box777', 'lang': None, 'vid': None, 'tst': [], 'gam': None}
 
     lang_code = users[uid].get('lang', 'ru')
     t = LANGS[lang_code]
