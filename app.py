@@ -10,65 +10,49 @@ app = Flask(__name__)
 db = {}
 users = {}
 
-# Словарь переводов для бота
 LANGS = {
     'cr': {
-        'code_set': 'Podešavanje koda: ',
-        'choose_lang': 'Odaberite jezik:',
-        'main_menu': 'Glavno meni:',
         'btn_vid': '🎥 Dodaj video',
         'btn_tst': '🥂 Dodaj zdravice',
         'btn_gam': '🎮 Dodaj igru',
         'btn_done': '✅ Potvrdi',
         'btn_reset': '🔄 Počni iznova',
-        'reset_msg': 'Sve je resetovano. Odaberite jezik:',
         'done_msg': '🎉 Gotovo! Sve je povezano sa kodom ',
         'select_cat': 'Odaberite kategoriju:',
         'select_targ': 'Za koga je ovo?',
         'select_age': 'Starosno ograničenje:',
         'select_video': 'Izaberite video:',
         'video_done': 'Video je uspešno dodat!',
-        'wip': '⏳ Ova sekcija je u izradi.',
         'cats': ["Rođendan", "Vjenčanje", "Godišnjica", "Rođenje djeteta", "Sastanak", "Dan zaljubljenih", "Nova godina", "Djevojačko veče", "8. Mart", "Kolegi"],
         'targs': ["Njemu", "Njoj", "Bračni par", "Grupa muškaraca", "Grupa žena", "Žene i muškarci"]
     },
     'en': {
-        'code_set': 'Code setup: ',
-        'choose_lang': 'Choose language:',
-        'main_menu': 'Main menu:',
         'btn_vid': '🎥 Attach video',
         'btn_tst': '🥂 Attach toasts',
         'btn_gam': '🎮 Attach game',
         'btn_done': '✅ Confirm',
         'btn_reset': '🔄 Start over',
-        'reset_msg': 'Reseted. Choose language:',
         'done_msg': '🎉 Done! Everything is linked to code ',
         'select_cat': 'Select category:',
         'select_targ': 'Who is this for?',
         'select_age': 'Age restriction:',
         'select_video': 'Select video:',
         'video_done': 'Video attached successfully!',
-        'wip': '⏳ This section is under development.',
         'cats': ["Birthday", "Wedding", "Anniversary", "Newborn", "Date", "Valentine's Day", "New Year", "Bachelorette", "March 8", "Colleague"],
         'targs': ["Him", "Her", "Couple", "Men group", "Women group", "Men & Women"]
     },
     'ru': {
-        'code_set': 'Настройка кода: ',
-        'choose_lang': 'Выберите язык:',
-        'main_menu': 'Главное меню:',
         'btn_vid': '🎥 Прикрепить видео',
         'btn_tst': '🥂 Прикрепить тосты',
         'btn_gam': '🎮 Прикрепить игру',
         'btn_done': '✅ Подтвердить',
         'btn_reset': '🔄 Начать сначала',
-        'reset_msg': 'Сброшено. Выберите язык:',
         'done_msg': '🎉 Готово! Всё привязано к коду ',
         'select_cat': 'Выберите категорию:',
         'select_targ': 'Для кого это?',
         'select_age': 'Возрастное ограничение:',
         'select_video': 'Выберите видео:',
         'video_done': 'Видео успешно прикреплено!',
-        'wip': '⏳ Этот раздел находится в разработке.',
         'cats': ["День рождения", "Свадьба", "Годовщина", "Рождение ребенка", "Свидание", "День влюбленных", "Новый год", "Девичник", "8 Марта", "Коллеге"],
         'targs': ["Ему", "Ей", "Семейная пара", "Группа мужчин", "Группа Женщин", "Женщины и Мужчины"]
     }
@@ -130,7 +114,7 @@ def start_command(message):
             Btn("🇬🇧 English", callback_data="lang_en"),
             Btn("🇷🇺 Русский", callback_data="lang_ru")
         )
-        bot.send_message(uid, "Настройка кода: " + qr_id + "\n\nВыберите язык / Choose language / Odaberite jezik:", reply_markup=k)
+        bot.send_message(uid, "​", reply_markup=k)
     else:
         bot.send_message(uid, "Жду сканирования QR-кода.")
 
@@ -148,8 +132,7 @@ def callback_query(call):
     if data.startswith("lang_"):
         selected_lang = data.split('_')[1]
         users[uid]['lang'] = selected_lang
-        t_new = LANGS[selected_lang]
-        bot.edit_message_text(t_new['main_menu'], uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        bot.edit_message_text("​", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
         
     elif data == "hub_reset":
         qr_id = users[uid]['qr']
@@ -160,7 +143,7 @@ def callback_query(call):
             Btn("🇬🇧 English", callback_data="lang_en"),
             Btn("🇷🇺 Русский", callback_data="lang_ru")
         )
-        bot.edit_message_text("Выберите язык / Choose language / Odaberite jezik:", uid, call.message.message_id, reply_markup=k)
+        bot.edit_message_text("​", uid, call.message.message_id, reply_markup=k)
         
     elif data == "hub_done":
         qr_id = users[uid]['qr']
@@ -168,17 +151,18 @@ def callback_query(call):
         del users[uid]
         bot.edit_message_text(t['done_msg'] + qr_id, uid, call.message.message_id)
         
-    elif data == "hub_vid":
-        users[uid]['current_flow'] = "vid"
+    elif data == "hub_vid" or data == "hub_tst":
+        users[uid]['current_flow'] = "vid" if data == "hub_vid" else "tst"
         k = InlineKeyboardMarkup(row_width=2)
         for c in t['cats']:
             k.insert(Btn(c, callback_data="cat_ok"))
         bot.edit_message_text(t['select_cat'], uid, call.message.message_id, reply_markup=k)
         
-    elif data == "hub_tst" or data == "hub_gam":
-        # Заглушки для тостов и игр (пока без подменю)
-        bot.answer_callback_query(call.id, t['wip'], show_alert=True)
-        return
+    elif data == "hub_gam":
+        users[uid]['current_flow'] = "gam"
+        k = InlineKeyboardMarkup(row_width=2)
+        k.add(Btn("0+", callback_data="age_0_gam"), Btn("18+", callback_data="age_18_gam"))
+        bot.edit_message_text(t['select_age'], uid, call.message.message_id, reply_markup=k)
         
     elif data == "cat_ok":
         k = InlineKeyboardMarkup(row_width=2)
@@ -192,17 +176,43 @@ def callback_query(call):
         bot.edit_message_text(t['select_age'], uid, call.message.message_id, reply_markup=k)
         
     elif data.startswith("age_"):
+        flow = users[uid].get('current_flow')
         k = InlineKeyboardMarkup(row_width=1)
-        k.add(
-            Btn("Видео 1", callback_data="set_vid_1"),
-            Btn("Видео 2", callback_data="set_vid_2"),
-            Btn("Видео 3", callback_data="set_vid_3")
-        )
-        bot.edit_message_text(t['select_video'], uid, call.message.message_id, reply_markup=k)
+        if flow == "vid":
+            k.add(
+                Btn("Видео 1", callback_data="set_vid_1"),
+                Btn("Видео 2", callback_data="set_vid_2"),
+                Btn("Видео 3", callback_data="set_vid_3")
+            )
+            bot.edit_message_text(t['select_video'], uid, call.message.message_id, reply_markup=k)
+        elif flow == "tst":
+            for i in range(1, 6):
+                k.insert(Btn(f"Тост {i}", callback_data=f"set_tst_{i}"))
+            k.add(Btn("🔙 Готово", callback_data="tst_done"))
+            bot.edit_message_text("Выберите тосты:", uid, call.message.message_id, reply_markup=k)
+            
+    elif data.startswith("age_0_") or data.startswith("age_18_"):
+        k = InlineKeyboardMarkup(row_width=1)
+        k.add(Btn("Игра 1", callback_data="set_gam_1"), Btn("Игра 2", callback_data="set_gam_2"))
+        bot.edit_message_text("Выберите игру:", uid, call.message.message_id, reply_markup=k)
         
     elif data.startswith("set_vid_"):
         users[uid]['vid'] = data.split('_')[2]
         bot.edit_message_text(t['video_done'], uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        
+    elif data.startswith("set_gam_"):
+        users[uid]['gam'] = data.split('_')[2]
+        bot.edit_message_text("Игра прикреплена!", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        
+    elif data.startswith("set_tst_"):
+        tst_id = data.split('_')[2]
+        if len(users[uid]['tst']) < 5 and tst_id not in users[uid]['tst']:
+            users[uid]['tst'].append(tst_id)
+        bot.answer_callback_query(call.id, f"Выбрано тостов: {len(users[uid]['tst'])}")
+        return
+        
+    elif data == "tst_done":
+        bot.edit_message_text("Тосты прикреплены!", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
 
     bot.answer_callback_query(call.id)
 
