@@ -11,11 +11,46 @@ db = {}
 def home():
     qr_id = request.args.get('id')
     if not qr_id:
-        return "Отсканируйте QR-код с этикетки."
+        return "Отсканируйте код"
     
     if qr_id not in db:
         bot_link = "https://t.me/my_magic_ar_bot?start=" + str(qr_id)
         return redirect(bot_link)
     
     video = db[qr_id]
-    return "
+    return "Плеер готов! Видео: " + video
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
+    bot.process_new_updates([update])
+    return "OK", 200
+
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    text = message.text.split()
+    if len(text) > 1:
+        qr_id = text[1]
+        markup = InlineKeyboardMarkup()
+        b1 = InlineKeyboardButton("Видео 1", callback_data="bind_" + qr_id + "_v1")
+        b2 = InlineKeyboardButton("Видео 2", callback_data="bind_" + qr_id + "_v2")
+        markup.add(b1, b2)
+        bot.send_message(message.chat.id, "Код: " + qr_id + "\nВыберите видео:", reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id, "Жду сканирования QR-кода.")
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('bind_'))
+def callback_query(call):
+    parts = call.data.split('_')
+    qr_id = parts[1]
+    v_name = parts[2]
+    
+    links = {"v1": "Космос", "v2": "Природа"}
+    db[qr_id] = links[v_name]
+    
+    bot.answer_callback_query(call.id, "Готово!")
+    msg = "Видео '" + links[v_name] + "' привязано к коду " + qr_id
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=msg)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
