@@ -113,26 +113,17 @@ def get_hub_menu(uid):
 def start_command(message):
     uid = message.chat.id
     text = message.text.split()
-    if len(text) > 1:
-        qr_id = text[1]
-        users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
-        k = InlineKeyboardMarkup(row_width=1)
-        k.add(
-            Btn("🇲🇪 Crnogorski", callback_data="lang_cr"),
-            Btn("🇬🇧 English", callback_data="lang_en"),
-            Btn("🇷🇺 Русский", callback_data="lang_ru")
-        )
-        bot.send_message(uid, "​", reply_markup=k)
-    else:
-        qr_id = "box777"
-        users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
-        k = InlineKeyboardMarkup(row_width=1)
-        k.add(
-            Btn("🇲🇪 Crnogorski", callback_data="lang_cr"),
-            Btn("🇬🇧 English", callback_data="lang_en"),
-            Btn("🇷🇺 Русский", callback_data="lang_ru")
-        )
-        bot.send_message(uid, "​", reply_markup=k)
+    qr_id = text[1] if len(text) > 1 else "box777"
+    users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
+    
+    k = InlineKeyboardMarkup(row_width=1)
+    k.add(
+        Btn("🇲🇪 Crnogorski", callback_data="lang_cr"),
+        Btn("🇬🇧 English", callback_data="lang_en"),
+        Btn("🇷🇺 Русский", callback_data="lang_ru")
+    )
+    # Используем точку вместо пустой строки, чтобы Telegram принял запрос
+    bot.send_message(uid, ".", reply_markup=k)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -147,7 +138,7 @@ def callback_query(call):
     if data.startswith("lang_"):
         selected_lang = data.split('_')[1]
         users[uid]['lang'] = selected_lang
-        bot.edit_message_text("​", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        bot.edit_message_text(".", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
         
     elif data == "hub_reset":
         qr_id = users[uid]['qr']
@@ -158,7 +149,7 @@ def callback_query(call):
             Btn("🇬🇧 English", callback_data="lang_en"),
             Btn("🇷🇺 Русский", callback_data="lang_ru")
         )
-        bot.edit_message_text("​", uid, call.message.message_id, reply_markup=k)
+        bot.edit_message_text(".", uid, call.message.message_id, reply_markup=k)
         
     elif data == "hub_done":
         qr_id = users[uid]['qr']
@@ -180,7 +171,7 @@ def callback_query(call):
         bot.edit_message_text(t['select_age'], uid, call.message.message_id, reply_markup=k)
         
     elif data == "cat_ok":
-        k = InlineKeyboardMarkup(row_width2 if 'row_width2' in globals() else 2) # safe fallback
+        k = InlineKeyboardMarkup(row_width=2)
         for tr in t['targs']:
             k.insert(Btn(tr, callback_data="targ_ok"))
         bot.edit_message_text(t['select_targ'], uid, call.message.message_id, reply_markup=k)
