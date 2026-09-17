@@ -201,7 +201,11 @@ def callback_query(call):
             
     elif data.startswith("age_0_") or data.startswith("age_18_"):
         k = InlineKeyboardMarkup(row_width=1)
-        k.add(Btn("Игра 1", callback_data="set_gam_1"), Btn("Игра 2", callback_data="set_gam_2"))
+        k.add(
+            Btn("Игра 1", callback_data="set_gam_1"),
+            Btn("Игра 2", callback_data="set_gam_2"),
+            Btn("Игра 3", callback_data="set_gam_3")
+        )
         bot.edit_message_text("Выберите игру:", uid, call.message.message_id, reply_markup=k)
         
     elif data.startswith("set_vid_"):
