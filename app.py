@@ -162,8 +162,8 @@ def callback_query(call):
     elif data == "hub_vid" or data == "hub_tst":
         users[uid]['current_flow'] = "vid" if data == "hub_vid" else "tst"
         k = InlineKeyboardMarkup(row_width=2)
-        for c in t['cats']:
-            k.insert(Btn(c, callback_data="cat_ok"))
+        buttons = [Btn(c, callback_data="cat_ok") for c in t['cats']]
+        k.add(*buttons)
         bot.edit_message_text(t['select_cat'], uid, call.message.message_id, reply_markup=k)
         
     elif data == "hub_gam":
@@ -174,8 +174,8 @@ def callback_query(call):
         
     elif data == "cat_ok":
         k = InlineKeyboardMarkup(row_width=2)
-        for tr in t['targs']:
-            k.insert(Btn(tr, callback_data="targ_ok"))
+        buttons = [Btn(tr, callback_data="targ_ok") for tr in t['targs']]
+        k.add(*buttons)
         bot.edit_message_text(t['select_targ'], uid, call.message.message_id, reply_markup=k)
         
     elif data == "targ_ok":
@@ -194,8 +194,8 @@ def callback_query(call):
             )
             bot.edit_message_text(t['select_video'], uid, call.message.message_id, reply_markup=k)
         elif flow == "tst":
-            for i in range(1, 6):
-                k.insert(Btn(f"Тост {i}", callback_data=f"set_tst_{i}"))
+            t_buttons = [Btn(f"Тост {i}", callback_data=f"set_tst_{i}") for i in range(1, 6)]
+            k.add(*t_buttons)
             k.add(Btn("🔙 Готово", callback_data="tst_done"))
             bot.edit_message_text("Выберите тосты:", uid, call.message.message_id, reply_markup=k)
             
