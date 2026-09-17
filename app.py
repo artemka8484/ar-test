@@ -94,11 +94,9 @@ AR_HTML = """
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <title>Magic AR</title>
-    <!-- Обновленные стабильные библиотеки -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/3.3.3/aframe/build/aframe-ar.js"></script>
     <style>
-      /* Жестко убираем белые фоны */
       body { margin: 0; overflow: hidden; background-color: #000; }
       #overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -122,16 +120,22 @@ AR_HTML = """
       <div class="info">{{ info_text }}</div>
     </div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
+    <!-- Настройки AR.js для распознавания маркеров -->
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;" vr-mode-ui="enabled: false">
       <a-assets>
-        <!-- Жестко прячем видео от браузера, чтобы оно было только внутри AR -->
         <video id="ar-video" style="display: none;" src="{{ video_url }}" playsinline webkit-playsinline loop preload="auto"></video>
       </a-assets>
 
-      <a-entity camera>
-         <!-- Само AR-видео: позиция 0 0 -2 означает, что оно висит в воздухе в 2 метрах перед вами -->
-         <a-video src="#ar-video" width="1.6" height="0.9" position="0 0 -2"></a-video>
-      </a-entity>
+      <!-- ПРИВЯЗКА К МАРКЕРУ -->
+      <!-- preset="hiro" означает, что AR будет искать стандартный маркер Hiro -->
+      <a-marker preset="hiro">
+         <!-- rotation="-90 0 0" кладет видео плашмя на маркер -->
+         <!-- position="0 0.1 0" немного приподнимает видео над маркером, чтобы текстуры не сливались -->
+         <a-video src="#ar-video" width="1.6" height="0.9" position="0 0.1 0" rotation="-90 0 0"></a-video>
+      </a-marker>
+
+      <!-- Камера теперь свободна и снимает окружение -->
+      <a-entity camera></a-entity>
     </a-scene>
 
     <script>
@@ -148,6 +152,7 @@ AR_HTML = """
   </body>
 </html>
 """
+
 
 
 @app.route('/')
