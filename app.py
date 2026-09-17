@@ -93,8 +93,10 @@ def webhook():
     return "OK", 200
 
 def get_hub_menu(uid):
+    if uid not in users:
+        users[uid] = {'qr': 'box777', 'lang': 'ru', 'vid': None, 'tst': [], 'gam': None}
     lang_code = users[uid].get('lang', 'ru')
-    t = LANGS[lang_code]
+    t = LANGS.get(lang_code, LANGS['ru'])
     k = InlineKeyboardMarkup(row_width=1)
     
     if not users[uid].get('vid'):
@@ -122,23 +124,23 @@ def start_command(message):
         Btn("🇬🇧 English", callback_data="lang_en"),
         Btn("🇷🇺 Русский", callback_data="lang_ru")
     )
-    # Используем точку вместо пустой строки, чтобы Telegram принял запрос
-    bot.send_message(uid, ".", reply_markup=k)
+    bot.send_message(uid, "Izaberite jezik / Choose language / Выберите язык:", reply_markup=k)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     uid = call.message.chat.id
     data = call.data
     if uid not in users:
-        users[uid] = {'qr': 'box777', 'lang': None, 'vid': None, 'tst': [], 'gam': None}
+        users[uid] = {'qr': 'box777', 'lang': 'ru', 'vid': None, 'tst': [], 'gam': None}
 
     lang_code = users[uid].get('lang', 'ru')
-    t = LANGS[lang_code]
+    t = LANGS.get(lang_code, LANGS['ru'])
 
     if data.startswith("lang_"):
         selected_lang = data.split('_')[1]
         users[uid]['lang'] = selected_lang
-        bot.edit_message_text(".", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        t_new = LANGS[selected_lang]
+        bot.edit_message_text(t_new['btn_vid'].split()[1] + " / Menu:", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
         
     elif data == "hub_reset":
         qr_id = users[uid]['qr']
@@ -149,7 +151,7 @@ def callback_query(call):
             Btn("🇬🇧 English", callback_data="lang_en"),
             Btn("🇷🇺 Русский", callback_data="lang_ru")
         )
-        bot.edit_message_text(".", uid, call.message.message_id, reply_markup=k)
+        bot.edit_message_text("Izaberite jezik / Choose language / Выберите язык:", uid, call.message.message_id, reply_markup=k)
         
     elif data == "hub_done":
         qr_id = users[uid]['qr']
