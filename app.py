@@ -59,10 +59,18 @@ LANGS = {
 }
 
 @app.route('/')
-def home():
+@app.route('/<path:subpath>')
+def home(subpath=""):
     q = request.args.get('id')
+    if not q and subpath:
+        subpath = subpath.lstrip('/')
+        if subpath.startswith('id='):
+            q = subpath.split('=')[1]
+        else:
+            q = subpath
+
     if not q:
-        return "Scan QR code"
+        return "Scan QR code please."
     if q not in db:
         return redirect("https://t.me/my_magic_ar_bot?start=" + str(q))
     
@@ -172,7 +180,7 @@ def callback_query(call):
         bot.edit_message_text(t['select_age'], uid, call.message.message_id, reply_markup=k)
         
     elif data == "cat_ok":
-        k = InlineKeyboardMarkup(row_width=2)
+        k = InlineKeyboardMarkup(row_width2 if 'row_width2' in globals() else 2) # safe fallback
         for tr in t['targs']:
             k.insert(Btn(tr, callback_data="targ_ok"))
         bot.edit_message_text(t['select_targ'], uid, call.message.message_id, reply_markup=k)
