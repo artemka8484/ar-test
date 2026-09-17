@@ -44,7 +44,7 @@ LANGS = {
     'ru': {
         'btn_vid': '🎥 Прикрепить видео',
         'btn_tst': '🥂 Прикрепить тосты',
-        'btn_gam': '🥂 Прикрепить игру',
+        'btn_gam': '🎮 Прикрепить игру',
         'btn_done': '✅ Подтвердить',
         'btn_reset': '🔄 Начать сначала',
         'done_msg': '🎉 Готово! Всё привязано к коду ',
@@ -61,13 +61,10 @@ LANGS = {
 @app.route('/')
 def home():
     q = request.args.get('id')
-    print("--- WEB REQUEST RECEIVED FOR ID:", q)
     if not q:
-        return "Scan QR code please."
+        return "Scan QR code"
     if q not in db:
-        target_url = "https://t.me/my_magic_ar_bot?start=" + str(q)
-        print("--- REDIRECTING TO:", target_url)
-        return redirect(target_url)
+        return redirect("https://t.me/my_magic_ar_bot?start=" + str(q))
     
     d = db[q]
     res = []
@@ -83,7 +80,6 @@ def home():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     raw_data = request.get_data().decode('utf-8')
-    print("--- TELEGRAM WEBHOOK DATA:", raw_data)
     update = telebot.types.Update.de_json(raw_data)
     bot.process_new_updates([update])
     return "OK", 200
@@ -109,7 +105,6 @@ def get_hub_menu(uid):
 def start_command(message):
     uid = message.chat.id
     text = message.text.split()
-    print("--- START COMMAND FROM USER:", uid, "TEXT:", message.text)
     if len(text) > 1:
         qr_id = text[1]
         users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
@@ -121,7 +116,6 @@ def start_command(message):
         )
         bot.send_message(uid, "​", reply_markup=k)
     else:
-        # Если пользователь зашел просто так, даем тестовый старт с кодом box777, чтобы вы сразу увидели кнопки
         qr_id = "box777"
         users[uid] = {'qr': qr_id, 'lang': None, 'vid': None, 'tst': [], 'gam': None}
         k = InlineKeyboardMarkup(row_width=1)
