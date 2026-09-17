@@ -22,7 +22,11 @@ LANGS = {
         'select_targ': 'Za koga je ovo?',
         'select_age': 'Starosno ograničenje:',
         'select_video': 'Izaberite video:',
+        'select_toast': 'Izaberite zdravice:',
+        'select_game': 'Izaberite igru:',
         'video_done': 'Video je uspešno dodat!',
+        'game_done': 'Igra je uspešno dodata!',
+        'tst_done': 'Zdravice su uspešno dodate!',
         'cats': ["Rođendan", "Vjenčanje", "Godišnjica", "Rođenje djeteta", "Sastanak", "Dan zaljubljenih", "Nova godina", "Djevojačko veče", "8. Mart", "Kolegi"],
         'targs': ["Njemu", "Njoj", "Bračni par", "Grupa muškaraca", "Grupa žena", "Žene i muškarci"]
     },
@@ -37,7 +41,11 @@ LANGS = {
         'select_targ': 'Who is this for?',
         'select_age': 'Age restriction:',
         'select_video': 'Select video:',
+        'select_toast': 'Select toasts:',
+        'select_game': 'Select game:',
         'video_done': 'Video attached successfully!',
+        'game_done': 'Game attached successfully!',
+        'tst_done': 'Toasts attached successfully!',
         'cats': ["Birthday", "Wedding", "Anniversary", "Newborn", "Date", "Valentine's Day", "New Year", "Bachelorette", "March 8", "Colleague"],
         'targs': ["Him", "Her", "Couple", "Men group", "Women group", "Men & Women"]
     },
@@ -52,7 +60,11 @@ LANGS = {
         'select_targ': 'Для кого это?',
         'select_age': 'Возрастное ограничение:',
         'select_video': 'Выберите видео:',
+        'select_toast': 'Выберите тосты:',
+        'select_game': 'Выберите игру:',
         'video_done': 'Видео успешно прикреплено!',
+        'game_done': 'Игра успешно прикреплена!',
+        'tst_done': 'Тосты успешно прикреплены!',
         'cats': ["День рождения", "Свадьба", "Годовщина", "Рождение ребенка", "Свидание", "День влюбленных", "Новый год", "Девичник", "8 Марта", "Коллеге"],
         'targs': ["Ему", "Ей", "Семейная пара", "Группа мужчин", "Группа Женщин", "Женщины и Мужчины"]
     }
@@ -169,7 +181,7 @@ def callback_query(call):
     elif data == "hub_gam":
         users[uid]['current_flow'] = "gam"
         k = InlineKeyboardMarkup(row_width=2)
-        k.add(Btn("0+", callback_data="age_0_gam"), Btn("18+", callback_data="age_18_gam"))
+        k.add(Btn("0+", callback_data="age_0"), Btn("18+", callback_data="age_18"))
         bot.edit_message_text(t['select_age'], uid, call.message.message_id, reply_markup=k)
         
     elif data == "cat_ok":
@@ -196,35 +208,33 @@ def callback_query(call):
         elif flow == "tst":
             t_buttons = [Btn(f"Тост {i}", callback_data=f"set_tst_{i}") for i in range(1, 6)]
             k.add(*t_buttons)
-            k.add(Btn("🔙 Готово", callback_data="tst_done"))
-            bot.edit_message_text("Выберите тосты:", uid, call.message.message_id, reply_markup=k)
+            k.add(Btn("🔙", callback_data="tst_done"))
+            bot.edit_message_text(t['select_toast'], uid, call.message.message_id, reply_markup=k)
+        elif flow == "gam":
+            k.add(
+                Btn("Игра 1", callback_data="set_gam_1"),
+                Btn("Игра 2", callback_data="set_gam_2"),
+                Btn("Игра 3", callback_data="set_gam_3")
+            )
+            bot.edit_message_text(t['select_game'], uid, call.message.message_id, reply_markup=k)
             
-    elif data.startswith("age_0_") or data.startswith("age_18_"):
-        k = InlineKeyboardMarkup(row_width=1)
-        k.add(
-            Btn("Игра 1", callback_data="set_gam_1"),
-            Btn("Игра 2", callback_data="set_gam_2"),
-            Btn("Игра 3", callback_data="set_gam_3")
-        )
-        bot.edit_message_text("Выберите игру:", uid, call.message.message_id, reply_markup=k)
-        
     elif data.startswith("set_vid_"):
         users[uid]['vid'] = data.split('_')[2]
         bot.edit_message_text(t['video_done'], uid, call.message.message_id, reply_markup=get_hub_menu(uid))
         
     elif data.startswith("set_gam_"):
         users[uid]['gam'] = data.split('_')[2]
-        bot.edit_message_text("Игра прикреплена!", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        bot.edit_message_text(t['game_done'], uid, call.message.message_id, reply_markup=get_hub_menu(uid))
         
     elif data.startswith("set_tst_"):
         tst_id = data.split('_')[2]
         if len(users[uid]['tst']) < 5 and tst_id not in users[uid]['tst']:
             users[uid]['tst'].append(tst_id)
-        bot.answer_callback_query(call.id, f"Выбрано тостов: {len(users[uid]['tst'])}")
+        bot.answer_callback_query(call.id, f"{len(users[uid]['tst'])} / 5")
         return
         
     elif data == "tst_done":
-        bot.edit_message_text("Тосты прикреплены!", uid, call.message.message_id, reply_markup=get_hub_menu(uid))
+        bot.edit_message_text(t['tst_done'], uid, call.message.message_id, reply_markup=get_hub_menu(uid))
 
     bot.answer_callback_query(call.id)
 
