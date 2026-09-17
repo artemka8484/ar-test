@@ -1,7 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup
 from telebot.types import InlineKeyboardButton as Btn
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, render_template_string
 
 API_TOKEN = '8808815647:AAF7Bvhh0QEv1HPhIfjAu-WSyrVeB6j_FvA'
 bot = telebot.TeleBot(API_TOKEN, threaded=False)
@@ -70,6 +70,63 @@ LANGS = {
     }
 }
 
+# HTML-шаблон для WebAR
+AR_HTML = """
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Magic AR</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      #overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); color: white;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 9999; font-family: sans-serif; text-align: center; padding: 20px;
+      }
+      button {
+        padding: 15px 40px; font-size: 22px; background: #28a745;
+        color: white; border: none; border-radius: 12px; cursor: pointer; margin-top: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      }
+      .info { margin-top: 20px; font-size: 14px; color: #aaa; }
+    </style>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    
+    <!-- Стартовый экран для разрешения камеры и звука -->
+    <div id="overlay">
+      <h2>{{ lang_start }}</h2>
+      <button onclick="startAR()">▶ PLAY AR</button>
+      <div class="info">{{ info_text }}</div>
+    </div>
+
+    <!-- AR Сцена -->
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <a-assets>
+        <!-- Тестовое видео. Позже мы привяжем сюда реальные ролики по ID -->
+        <video id="ar-video" src="https://www.w3schools.com/html/mov_bbb.mp4" playsinline loop crossorigin="anonymous"></video>
+      </a-assets>
+
+      <!-- Видео будет висеть прямо перед камерой пользователя -->
+      <a-entity camera>
+         <a-video src="#ar-video" width="1.6" height="0.9" position="0 0 -2"></a-video>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      function startAR() {
+        document.getElementById('overlay').style.display = 'none';
+        var vid = document.getElementById('ar-video');
+        vid.play();
+      }
+    </script>
+  </body>
+</html>
+"""
+
 @app.route('/')
 @app.route('/<path:subpath>')
 def home(subpath=""):
@@ -83,19 +140,27 @@ def home(subpath=""):
 
     if not q:
         return "Scan QR code please."
+    
+    # 1. Если кода еще нет в базе — редирект в бот для настройки
     if q not in db:
         return redirect("https://t.me/my_magic_ar_bot?start=" + str(q))
     
+    # 2. Если код настроен — показываем AR-сцену
     d = db[q]
-    res = []
-    res.append("<h1>AR (" + str(d.get('lang', 'ru')) + ")</h1><br>")
-    if d.get('vid'):
-        res.append("Video: " + str(d.get('vid')) + "<br>")
-    if d.get('tst'):
-        res.append("Toasts: " + ", ".join(d.get('tst', [])) + "<br>")
-    if d.get('gam'):
-        res.append("Game: " + str(d.get('gam')) + "<br>")
-    return "".join(res)
+    
+    # Подстраиваем приветственный текст под выбранный язык
+    lang = d.get('lang', 'ru')
+    if lang == 'en':
+        lang_start = "Experience Magic AR!"
+        info_text = f"Video ID: {d.get('vid')} | Toasts: {len(d.get('tst', []))} | Game ID: {d.get('gam')}"
+    elif lang == 'cr':
+        lang_start = "Doživite Magic AR!"
+        info_text = f"Video ID: {d.get('vid')} | Zdravice: {len(d.get('tst', []))} | Igra ID: {d.get('gam')}"
+    else:
+        lang_start = "Погрузитесь в Magic AR!"
+        info_text = f"Видео: {d.get('vid')} | Тостов: {len(d.get('tst', []))} | Игра: {d.get('gam')}"
+
+    return render_template_string(AR_HTML, lang_start=lang_start, info_text=info_text)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
